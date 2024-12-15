@@ -9,6 +9,7 @@
 #include <Ticker.h>
 #include <driver/ledc.h>
 #include "flash/flash.h"
+#include "led/led.h"
 
 extern void dis_init(void);
 extern void turnOffScreen();

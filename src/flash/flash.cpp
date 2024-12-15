@@ -155,6 +155,11 @@ static void load_config(){
     gJsonData.update_flag = preferences.getInt("update_flag", 0);
     /* load connect_flag */
     gJsonData.connect_flag = preferences.getInt("connect_flag", 0);
+    /* power_night */
+    gJsonData.power_night = preferences.getInt("power_night", 0);
+    /* led mode */
+    gJsonData.led_mode = preferences.getInt("led_mode", 2);
+    globalData.led_mode = gJsonData.led_mode;
     // /* load wifi_ssid */ 
     // String wifi_ssid = preferences.getString("wifi_ssid", "");
     // strncpy(gJsonData.wifi_ssid, wifi_ssid.c_str(), sizeof(gJsonData.wifi_ssid)-1);
@@ -390,6 +395,9 @@ void serialEvent() {
           if(globalData.flag_first_connect == 0){
             globalData.flag_first_connect = 1;
             lv_obj_add_flag(ui_labOpen, LV_OBJ_FLAG_HIDDEN);
+            delay(100);
+            lv_obj_add_flag(ui_labOpen, LV_OBJ_FLAG_HIDDEN);
+            delay(100);
             lv_obj_clear_flag(ui_pannelOpen, LV_OBJ_FLAG_HIDDEN);
           }
           break;
@@ -466,9 +474,9 @@ void serialEvent() {
           break;
         case '8':
           /* get weather data */
+          globalData.weather_update_state = 1;
           update_weather_data(receivedString);
           memset(receivedString, 0, sizeof(char)*512);
-          globalData.weather_update_state = 1;
           Serial.printf("$001#");
           break;
         case '9':
@@ -529,35 +537,39 @@ void config_query(){
     Serial.println("更新标志: " + String(gJsonData.update_flag));
     /* print connect flag */
     Serial.println("连接标志: " + String(gJsonData.connect_flag));
-    /* print wifi ssid */
-    Serial.println("WiFi SSID: " + String(gJsonData.wifi_ssid));
-    /* print wifi password */
-    Serial.println("WiFi密码: " + String(gJsonData.wifi_password));
+    /* print power night */
+    Serial.println("夜间模式: " + String(gJsonData.power_night));
+    // /* print wifi ssid */
+    // Serial.println("WiFi SSID: " + String(gJsonData.wifi_ssid));
+    // /* print wifi password */
+    // Serial.println("WiFi密码: " + String(gJsonData.wifi_password));
 }
 
 
 static void update_weather_data(char* receiveData){
     char* str_copy = strndup(receiveData + 2, strlen(receiveData + 2) - 1);  // 创建字符串副本，从第三个字符开始，不包含最后一个字符$
     char* token;
-    int numbers[20] = {0};  // 存储提取的数字
+    int numbers[50] = {0};  // 存储提取的数字
     int count = 0;
 
     // 跳过第一个#
-    token = strchr(str_copy, '#');
+    token = strchr(str_copy, '&');
     if(token != NULL) {
         token++; // 移到#后面的字符
-        
-        while(*token != '\0' && count < 20) {
+        while(*token != '\0' && count < 50) {
             if(isdigit(*token)) {
                 char numStr[10] = {0};
                 int i = 0;
                 // 收集连续的数字
                 while(isdigit(*token)) {
-                    numStr[i++] = *token++;
+                    numStr[i] = *token;
+                    i++;
+                    token++;
                 }
                 numbers[count++] = atoi(numStr);
-            } else {
-                token++; // 跳过非数字字符(如#)
+            } 
+            else {
+                token++; // 跳过其他非数字字符
             }
         }
     }
@@ -674,22 +686,30 @@ void update_config(char* receiveData, int length){
       /* connect_flag */
       gJsonData.connect_flag = receiveData[4] - '0';
       preferences.putInt("connect_flag", gJsonData.connect_flag);
+      gJsonData.connect_flag = 0;
       break;
     }
-    case 'd': {
-      /* wifi_ssid */
-      int ssidLen = length - 5;
-      strncpy(gJsonData.wifi_ssid, &receiveData[4], ssidLen);
-      gJsonData.wifi_ssid[ssidLen] = '\0';
-      preferences.putString("wifi_ssid", gJsonData.wifi_ssid);
-      break;
-    }
-    case 'e': {
-      /* wifi_password */
-      int passwordLen = length - 5;
-      strncpy(gJsonData.wifi_password, &receiveData[4], passwordLen);
-      gJsonData.wifi_password[passwordLen] = '\0';
-      preferences.putString("wifi_password", gJsonData.wifi_password);
+    // case 'd': {
+    //   /* wifi_ssid */
+    //   int ssidLen = length - 5;
+    //   strncpy(gJsonData.wifi_ssid, &receiveData[4], ssidLen);
+    //   gJsonData.wifi_ssid[ssidLen] = '\0';
+    //   preferences.putString("wifi_ssid", gJsonData.wifi_ssid);
+    //   break;
+    // }
+    // case 'e': {
+    //   /* wifi_password */
+    //   int passwordLen = length - 5;
+    //   strncpy(gJsonData.wifi_password, &receiveData[4], passwordLen);
+    //   gJsonData.wifi_password[passwordLen] = '\0';
+    //   preferences.putString("wifi_password", gJsonData.wifi_password);
+    //   break;
+    // }
+    case 'f': {
+      /* power_night */
+      gJsonData.power_night = receiveData[4] - '0';
+      Serial.printf("power_night: %d\n", gJsonData.power_night);
+      preferences.putInt("power_night", gJsonData.power_night);
       break;
     }
     default:

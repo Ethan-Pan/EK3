@@ -165,16 +165,28 @@ static void task_watch(void *pt){
         }
         // 开机之后10分钟进入深度休眠
         if(isInPowerSaveTime && (millis() - globalData.time_switch_on) >= 1000 * 60 * 10) {
-            // 计算当前时间到power_end的时间差(以分钟为单位)
-            int wakeupMinutes = 0;
-            wakeupMinutes = (24 - globalData.cur_time_hour + gJsonData.power_end_hour) * 60 + 
-                               (gJsonData.power_end_min - globalData.cur_time_min);
-            // 设置定时器唤醒时间(转换为微秒)
-            esp_sleep_enable_timer_wakeup(wakeupMinutes * 60 * 1000000ULL);
-            Serial.printf("Deep Sleep MODE\n");
-            led_close();
-            turnOffScreen();
-            esp_deep_sleep_start(); 
+            if(gJsonData.power_night == 0){
+                // 计算当前时间到power_end的时间差(以分钟为单位)
+                int wakeupMinutes = 0;
+                wakeupMinutes = (24 - globalData.cur_time_hour + gJsonData.power_end_hour) * 60 + 
+                                (gJsonData.power_end_min - globalData.cur_time_min);
+                // 设置定时器唤醒时间(转换为微秒)
+                esp_sleep_enable_timer_wakeup(wakeupMinutes * 60 * 1000000ULL);
+                Serial.printf("Deep Sleep MODE\n");
+                led_close();
+                turnOffScreen();
+                esp_deep_sleep_start(); 
+            }
+            else if (gJsonData.power_night == 1)
+            {
+                // 计算当前时间到power_end的时间差(以分钟为单位)
+                int wakeupMinutes = 0;
+                wakeupMinutes = (24 - globalData.cur_time_hour + gJsonData.power_end_hour) * 60 + 
+                                (gJsonData.power_end_min - globalData.cur_time_min);
+                led_close();
+                turnOffScreen();
+            }
+            
         }
         lv_img_set_angle(ui_sec, gSecAngle);
         lv_img_set_angle(ui_sec_dot, gSecAngle);
@@ -187,6 +199,10 @@ static void task_watch(void *pt){
 static void task_LED(void *pt){
     while(1){
         if(globalData.flag_led == 0){
+            if(globalData.led_mode != gJsonData.led_mode){
+                gJsonData.led_mode = globalData.led_mode;
+                preferences.putInt("led_mode", gJsonData.led_mode);
+            }
             switch (globalData.led_mode)
             {
                 case 0:
@@ -409,7 +425,6 @@ static void task_power(void *pt){
             lv_obj_set_style_arc_color(ui_ArcPower1, lv_color_hex(0X00aa1a), LV_PART_INDICATOR | LV_STATE_DEFAULT);
             lv_obj_set_style_arc_color(ui_ArcPower2, lv_color_hex(0x00aa1a), LV_PART_INDICATOR | LV_STATE_DEFAULT);
         }
-        
         else{
             lv_obj_set_style_arc_color(ui_ArcPower1, lv_color_hex(0xB0E14A), LV_PART_INDICATOR | LV_STATE_DEFAULT);
             lv_obj_set_style_arc_color(ui_ArcPower2, lv_color_hex(0xB0E14A), LV_PART_INDICATOR | LV_STATE_DEFAULT);
@@ -606,10 +621,11 @@ static void task_weather_update(void *pt){
                 send_weather_update();
             }else{
                 globalData.weather_update_time = 60 * 60;
+                vTaskDelay(1000 * globalData.weather_update_time);
                 send_weather_update();
             }
         }
-        vTaskDelay(1000 * globalData.weather_update_time);
+        vTaskDelay(1000);
     }
 }
 
@@ -646,12 +662,24 @@ static void task_version_update(void *pt){
                 lv_obj_add_flag(ui_panelNewVersion, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_add_flag(ui_panelNoConnect, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_add_flag(ui_panelAlready, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
+                lv_obj_add_flag(ui_panelNewVersion, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_panelNoConnect, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_panelAlready, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
                 lv_label_set_text(ui_labUpdate1, "更新下载中");
                 lv_obj_clear_flag(ui_panelCheckUpdate, LV_OBJ_FLAG_HIDDEN);
             }
             if(globalData.ota_download_state == 2){
                 globalData.ota_download_state = 0;
                 lv_obj_add_flag(ui_panelCheckUpdate, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_panelNewVersion, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_panelAlready, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
+                lv_obj_add_flag(ui_panelCheckUpdate, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_panelNewVersion, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_panelAlready, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
                 lv_obj_clear_flag(ui_panelNoConnect, LV_OBJ_FLAG_HIDDEN);
                 delay(3000);
                 send_update_start();

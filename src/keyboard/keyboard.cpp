@@ -19,7 +19,7 @@ void ble_keyboard_init() {
 
 void keyboard_finger() {
     if(bleKeyboard.isConnected()) {
-        bleKeyboard.write(KEY_ESC);
+        bleKeyboard.write(KEY_BACKSPACE);
         delay(1000);
         bleKeyboard.print(gJsonData.finger_pin);
         bleKeyboard.write(KEY_RETURN);

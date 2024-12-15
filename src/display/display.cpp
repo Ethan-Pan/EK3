@@ -47,8 +47,9 @@ void my_touchpad_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data )
     data->point.y = touch.data.y;
 
     // 点亮屏幕
-    if(gJsonData.power_deep_save == 1){ // 如果开启深度休眠
+    if(gJsonData.power_deep_save == 1 || gJsonData.power_night == 1){ // 如果开启熄屏 或者 夜间模式
         turnOnScreen();
+        led_open();
     }
   }
   else
@@ -83,7 +84,7 @@ void dis_init(){
     lv_indev_drv_register(&indev_drv);
     // 设定定时器 10s后关闭屏幕
     if(gJsonData.power_deep_save == 1){ // 如果开启深度休眠
-        screenOffTimer.attach(10, turnOffScreen);
+        screenOffTimer.attach(30, turnOffScreen);
     }
 
     // 配置LED PWM功能

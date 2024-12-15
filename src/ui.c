@@ -262,20 +262,28 @@ void ui_event_scrOpen(lv_event_t * e)
             _ui_screen_change(&ui_scrWatch1, LV_SCR_LOAD_ANIM_FADE_ON, 50, 3000, &ui_scrWatch1_screen_init);
         }
         else{
+            lv_obj_clear_flag(ui_logo, LV_OBJ_FLAG_HIDDEN);
             // 1. 先显示logo 2秒
             lv_timer_t * timer = lv_timer_create(
                 (lv_timer_cb_t)start_logo_animation,  // 创建新的回调函数
                 2000,  // 2秒后开始动画
                 NULL
             );
+
             if(globalData.flag_first_connect == 1){
                 lv_obj_add_flag(ui_labOpen, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
+                lv_obj_add_flag(ui_labOpen, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
                 lv_obj_clear_flag(ui_pannelOpen, LV_OBJ_FLAG_HIDDEN);
             }else{
-                lv_obj_clear_flag(ui_scrOpen, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(ui_pannelOpen, LV_OBJ_FLAG_HIDDEN); 
+                lv_obj_add_flag(ui_pannelOpen, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
+                lv_obj_add_flag(ui_pannelOpen, LV_OBJ_FLAG_HIDDEN);
+                delay(100);
+                // lv_obj_clear_flag(ui_scrOpen, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(ui_labOpen, LV_OBJ_FLAG_HIDDEN);
             }
-            
         }
     }
 }

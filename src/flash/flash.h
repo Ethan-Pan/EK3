@@ -49,6 +49,8 @@ typedef struct {
     int power_end_hour;
     int power_end_min;
     int power_deep_save;
+    int power_night;
+    int led_mode;
     char finger_pin[30];
     int x_mode;
     char x_input[20];
@@ -58,6 +60,7 @@ typedef struct {
     char wifi_password[20];
 } JsonDataStru;
 
+extern Preferences preferences;
 extern JsonDataStru gJsonData;
 extern void config_init(void);
 extern void serialEvent(void);
